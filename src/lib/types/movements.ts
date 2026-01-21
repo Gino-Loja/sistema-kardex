@@ -27,6 +27,7 @@ export interface AverageCostItem {
   costoPromedio: number
   cantidad: number
   valorTotal: number
+  stockMinimo: number | null
 }
 
 export interface AverageCostsResponse {

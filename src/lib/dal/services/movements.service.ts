@@ -79,8 +79,8 @@ export type ItemBodegaRepository = {
   obtenerPorItemBodega: (
     itemId: string,
     bodegaId: string,
-  ) => Promise<import("./item-bodegas.repository").ItemBodega | null>;
-  guardar: (input: import("./item-bodegas.repository").ItemBodega) => Promise<import("./item-bodegas.repository").ItemBodega>;
+  ) => Promise<import("../repositories/item-bodegas.repository").ItemBodega | null>;
+  guardar: (input: import("../repositories/item-bodegas.repository").ItemBodega) => Promise<import("../repositories/item-bodegas.repository").ItemBodega>;
   actualizarCostoPromedioParaItem: (
     itemId: string,
     nuevoCostoPromedio: number
@@ -121,7 +121,7 @@ export const createMovementsService = ({
    * Helper to log cost audit when average changes
    */
   const registrarAuditoriaCosto = async (
-    itemBodega: import("./item-bodegas.repository").ItemBodega,
+    itemBodega: import("../repositories/item-bodegas.repository").ItemBodega,
     movimientoId: string,
     usuarioId: string,
     cantidadAnterior: number,

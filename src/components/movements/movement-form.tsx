@@ -418,12 +418,40 @@ export function MovementForm({ mode, movementId, initialValues }: MovementFormPr
     return null
   }
 
+  // Helper to check if stock will fall below minimum after movement (warning for salida/transferencia)
+  const getMinStockWarning = (itemId: string, cantidad: number): string | null => {
+    if (!isCostReadonly || !itemId || !averageCosts[itemId]) {
+      return null
+    }
+    const { cantidad: stockActual, stockMinimo } = averageCosts[itemId]
+    // Skip if no minimum configured or insufficient stock (that's a separate error)
+    if (stockMinimo == null || stockMinimo <= 0 || cantidad > stockActual) {
+      return null
+    }
+    const stockResultante = stockActual - cantidad
+    if (stockResultante < stockMinimo) {
+      return `Stock quedará bajo el mínimo (${formatNumber(stockMinimo, 2)}). Resultante: ${formatNumber(stockResultante, 2)}`
+    }
+    return null
+  }
+
   // Check if any detail has insufficient stock
   const hasStockWarnings = useMemo(() => {
     if (!isCostReadonly) return false
     return values.detalles.some((d) => {
       if (!d.itemId || !averageCosts[d.itemId]) return false
       return d.cantidad > averageCosts[d.itemId].cantidad
+    })
+  }, [values.detalles, averageCosts, isCostReadonly])
+
+  // Check if any detail will cause stock to fall below minimum
+  const hasMinStockWarnings = useMemo(() => {
+    if (!isCostReadonly) return false
+    return values.detalles.some((d) => {
+      if (!d.itemId || !averageCosts[d.itemId]) return false
+      const { cantidad: stockActual, stockMinimo } = averageCosts[d.itemId]
+      if (stockMinimo == null || stockMinimo <= 0 || d.cantidad > stockActual) return false
+      return (stockActual - d.cantidad) < stockMinimo
     })
   }, [values.detalles, averageCosts, isCostReadonly])
 
@@ -563,6 +591,17 @@ export function MovementForm({ mode, movementId, initialValues }: MovementFormPr
         </div>
       )}
 
+      {/* Minimum Stock Warning Alert */}
+      {hasMinStockWarnings && !hasStockWarnings && (
+        <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          <IconAlertTriangle className="h-5 w-5 shrink-0" />
+          <div>
+            <span className="font-medium">Advertencia de stock mínimo:</span>{" "}
+            Algunos ítems quedarán por debajo del stock mínimo configurado después de este movimiento.
+          </div>
+        </div>
+      )}
+
       {/* Detail Lines Section */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between">
@@ -651,6 +690,12 @@ export function MovementForm({ mode, movementId, initialValues }: MovementFormPr
                         <span className="flex items-center gap-1 text-xs text-amber-600">
                           <IconAlertTriangle className="h-3 w-3" />
                           {getStockWarning(detalle.itemId, detalle.cantidad)}
+                        </span>
+                      )}
+                      {!errors[`detalles.${index}.cantidad`] && !getStockWarning(detalle.itemId, detalle.cantidad) && getMinStockWarning(detalle.itemId, detalle.cantidad) && (
+                        <span className="flex items-center gap-1 text-xs text-blue-600">
+                          <IconAlertTriangle className="h-3 w-3" />
+                          {getMinStockWarning(detalle.itemId, detalle.cantidad)}
                         </span>
                       )}
                     </div>

@@ -334,6 +334,7 @@ export const getAverageCosts = async (
       itemId: itemBodegas.itemId,
       costoPromedio: itemBodegas.costoPromedio,
       cantidad: itemBodegas.stockActual,
+      stockMinimo: itemBodegas.stockMinimo,
     })
     .from(itemBodegas)
     .where(
@@ -350,16 +351,19 @@ export const getAverageCosts = async (
     if (registro) {
       const costoPromedio = Number(registro.costoPromedio) || 0
       const cantidad = Number(registro.cantidad) || 0
+      const stockMinimo = registro.stockMinimo != null ? Number(registro.stockMinimo) : null
       costs[id] = {
         costoPromedio,
         cantidad,
         valorTotal: costoPromedio * cantidad,
+        stockMinimo,
       }
     } else {
       costs[id] = {
         costoPromedio: 0,
         cantidad: 0,
         valorTotal: 0,
+        stockMinimo: null,
       }
     }
   }
