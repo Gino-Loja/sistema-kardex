@@ -22,6 +22,12 @@ type ItemOption = {
   estado: string
 }
 
+type SelectedItemData = {
+  itemId: string
+  stockInicial: number
+  costoUnitario: number
+}
+
 type WarehouseItemAssignmentProps = {
   bodegaId: string
   bodegaEstado: string
@@ -39,7 +45,7 @@ export function WarehouseItemAssignment({
   const [items, setItems] = useState<ItemOption[]>([])
   const [itemsPage, setItemsPage] = useState(1)
   const [itemsTotal, setItemsTotal] = useState(0)
-  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [selectedItems, setSelectedItems] = useState<Map<string, SelectedItemData>>(new Map())
   const [assignedIds, setAssignedIds] = useState<string[]>(assignedItemIds)
   const [isLoading, setIsLoading] = useState(true)
   const [isLoadingAssigned, setIsLoadingAssigned] = useState(false)
@@ -151,15 +157,30 @@ export function WarehouseItemAssignment({
       : null
 
   const toggleSelection = (itemId: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(itemId)
-        ? prev.filter((id) => id !== itemId)
-        : [...prev, itemId],
-    )
+    setSelectedItems((prev) => {
+      const newMap = new Map(prev)
+      if (newMap.has(itemId)) {
+        newMap.delete(itemId)
+      } else {
+        newMap.set(itemId, { itemId, stockInicial: 0, costoUnitario: 0 })
+      }
+      return newMap
+    })
+  }
+
+  const updateItemData = (itemId: string, field: "stockInicial" | "costoUnitario", value: number) => {
+    setSelectedItems((prev) => {
+      const newMap = new Map(prev)
+      const current = newMap.get(itemId)
+      if (current) {
+        newMap.set(itemId, { ...current, [field]: value })
+      }
+      return newMap
+    })
   }
 
   const handleSubmit = async () => {
-    if (disabled || selectedIds.length === 0) {
+    if (disabled || selectedItems.size === 0) {
       return
     }
 
@@ -167,19 +188,21 @@ export function WarehouseItemAssignment({
     setError(null)
 
     try {
+      const itemsToAssign = Array.from(selectedItems.values())
+
       const response = await fetch(`/api/bodegas/${bodegaId}/items`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ itemIds: selectedIds }),
+        body: JSON.stringify({ items: itemsToAssign }),
       })
 
       if (!response.ok) {
         const payload = await response.json().catch(() => null)
         const message = payload?.error
 
-        if (message === "ITEM_ALREADY_ASSIGNED") {
+        if (message === "ITEM_ALREADY_ASSIGNED" || message === "ITEMS_ALREADY_ASSIGNED") {
           setError("Uno o mas items ya estaban asignados.")
         } else if (message === "ITEM_INACTIVE") {
           setError("Solo se pueden asignar items activos.")
@@ -191,7 +214,7 @@ export function WarehouseItemAssignment({
         return
       }
 
-      setSelectedIds([])
+      setSelectedItems(new Map())
       setIsOpen(false)
       window.dispatchEvent(new Event("bodega-items-refresh"))
       router.refresh()
@@ -202,6 +225,8 @@ export function WarehouseItemAssignment({
     }
   }
 
+  const getItemInfo = (itemId: string) => items.find((i) => i.id === itemId)
+
   return (
     <div className="flex flex-col items-end gap-1">
       <Sheet
@@ -209,7 +234,7 @@ export function WarehouseItemAssignment({
         onOpenChange={(nextOpen) => {
           setIsOpen(nextOpen)
           if (!nextOpen) {
-            setSelectedIds([])
+            setSelectedItems(new Map())
             setSearch("")
             setQuery("")
             setError(null)
@@ -221,102 +246,166 @@ export function WarehouseItemAssignment({
             Asignar items
           </Button>
         </SheetTrigger>
-        <SheetContent side="right" className="sm:max-w-lg px-3 py-3">
-          <SheetHeader className="px-0 pt-0">
+        <SheetContent side="right" className="sm:max-w-lg flex flex-col h-full p-0">
+          <SheetHeader className="px-4 pt-4 pb-2 flex-shrink-0">
             <SheetTitle>Seleccionar items</SheetTitle>
             <SheetDescription>
-              Busca y selecciona los items que deseas asignar a la bodega.
+              Busca y selecciona los items. Puedes especificar stock inicial y costo.
             </SheetDescription>
           </SheetHeader>
 
-          <div className="grid gap-3">
-            <Input
-              placeholder="Buscar por codigo o nombre"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
+          <div className="flex-1 overflow-y-auto px-4">
+            <div className="grid gap-3 pb-4">
+              <Input
+                placeholder="Buscar por codigo o nombre"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
 
-            {isLoading || isLoadingAssigned ? (
-              <div className="text-sm text-neutral-500">Cargando items...</div>
-            ) : items.length === 0 ? (
-              <div className="text-sm text-neutral-500">
-                No hay items activos disponibles.
-              </div>
-            ) : (
-              <div className="grid max-h-72 gap-2 overflow-y-auto rounded-lg border border-neutral-200 p-3 text-sm text-neutral-700">
-                {items.map((item) => {
-                  const isAssigned = assignedSet.has(item.id)
-                  return (
-                    <label
-                      key={item.id}
-                      className={`flex items-center justify-between gap-3 rounded-md px-2 py-1 ${
-                        isAssigned ? "opacity-60" : ""
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={selectedIds.includes(item.id)}
-                          onChange={() => toggleSelection(item.id)}
-                          disabled={disabled || isAssigned}
-                        />
-                        <span className="font-medium">
-                          {item.codigo}
-                        </span>
-                        <span className="text-neutral-500">
-                          {item.nombre}
-                        </span>
-                      </div>
-                      {isAssigned ? (
-                        <span className="text-xs text-neutral-400">
-                          Asignado
-                        </span>
-                      ) : null}
-                    </label>
-                  )
-                })}
-              </div>
-            )}
+              {isLoading || isLoadingAssigned ? (
+                <div className="text-sm text-neutral-500">Cargando items...</div>
+              ) : items.length === 0 ? (
+                <div className="text-sm text-neutral-500">
+                  No hay items activos disponibles.
+                </div>
+              ) : (
+                <div className="grid gap-2 rounded-lg border border-neutral-200 p-3 text-sm text-neutral-700">
+                  {items.map((item) => {
+                    const isAssigned = assignedSet.has(item.id)
+                    const isSelected = selectedItems.has(item.id)
+                    return (
+                      <label
+                        key={item.id}
+                        className={`flex items-center justify-between gap-3 rounded-md px-2 py-1 ${
+                          isAssigned ? "opacity-60" : ""
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleSelection(item.id)}
+                            disabled={disabled || isAssigned}
+                          />
+                          <span className="font-medium">
+                            {item.codigo}
+                          </span>
+                          <span className="text-neutral-500">
+                            {item.nombre}
+                          </span>
+                        </div>
+                        {isAssigned ? (
+                          <span className="text-xs text-neutral-400">
+                            Asignado
+                          </span>
+                        ) : null}
+                      </label>
+                    )
+                  })}
+                </div>
+              )}
 
-            <div className="flex items-center justify-between text-xs text-neutral-500">
-              <span>
-                Pagina {itemsPage} de {totalPages}
-              </span>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setItemsPage((prev) => Math.max(1, prev - 1))}
-                  disabled={itemsPage <= 1}
-                >
-                  Anterior
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setItemsPage((prev) => Math.min(totalPages, prev + 1))}
-                  disabled={itemsPage >= totalPages}
-                >
-                  Siguiente
-                </Button>
+              <div className="flex items-center justify-between text-xs text-neutral-500">
+                <span>
+                  Pagina {itemsPage} de {totalPages}
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setItemsPage((prev) => Math.max(1, prev - 1))}
+                    disabled={itemsPage <= 1}
+                  >
+                    Anterior
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setItemsPage((prev) => Math.min(totalPages, prev + 1))}
+                    disabled={itemsPage >= totalPages}
+                  >
+                    Siguiente
+                  </Button>
+                </div>
               </div>
+
+              {selectedItems.size > 0 && (
+                <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+                  <p className="mb-2 text-xs font-medium text-blue-700">
+                    Items seleccionados ({selectedItems.size})
+                  </p>
+                  <div className="grid gap-3">
+                    {Array.from(selectedItems.values()).map((selected) => {
+                      const itemInfo = getItemInfo(selected.itemId)
+                      return (
+                        <div
+                          key={selected.itemId}
+                          className="rounded-md bg-white p-2 text-xs"
+                        >
+                          <p className="font-medium text-neutral-700 mb-2">
+                            {itemInfo?.codigo} - {itemInfo?.nombre}
+                          </p>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-neutral-500">Stock inicial</label>
+                              <Input
+                                type="number"
+                                min="0"
+                                step="1"
+                                value={selected.stockInicial || ""}
+                                onChange={(e) =>
+                                  updateItemData(
+                                    selected.itemId,
+                                    "stockInicial",
+                                    parseFloat(e.target.value) || 0
+                                  )
+                                }
+                                placeholder="0"
+                                className="h-8 text-xs"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-neutral-500">Costo unitario</label>
+                              <Input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={selected.costoUnitario || ""}
+                                onChange={(e) =>
+                                  updateItemData(
+                                    selected.itemId,
+                                    "costoUnitario",
+                                    parseFloat(e.target.value) || 0
+                                  )
+                                }
+                                placeholder="0.00"
+                                className="h-8 text-xs"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {error ? (
+                <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {error}
+                </div>
+              ) : null}
             </div>
-
-            {error ? (
-              <div className="rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {error}
-              </div>
-            ) : null}
           </div>
 
-          <SheetFooter className="px-0 pb-0">
+          <SheetFooter className="flex-shrink-0 border-t border-neutral-200 px-4 py-3">
             <Button
               type="button"
-              disabled={disabled || isSubmitting || selectedIds.length === 0}
+              disabled={disabled || isSubmitting || selectedItems.size === 0}
               onClick={handleSubmit}
               className="w-full"
             >
-              {isSubmitting ? "Asignando..." : "Asignar items"}
+              {isSubmitting ? "Asignando..." : `Asignar ${selectedItems.size} item${selectedItems.size !== 1 ? "s" : ""}`}
             </Button>
           </SheetFooter>
         </SheetContent>
