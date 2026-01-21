@@ -1,0 +1,250 @@
+openapi: 3.0.3
+info:
+  title: Bodegas API
+  version: 1.0.0
+  description: Contratos para gestion de bodegas y asignacion de items.
+
+servers:
+  - url: /api
+
+paths:
+  /bodegas:
+    get:
+      summary: Listar bodegas
+      responses:
+        '200':
+          description: Lista de bodegas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Bodega'
+    post:
+      summary: Crear bodega
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BodegaCreate'
+      responses:
+        '201':
+          description: Bodega creada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bodega'
+        '400':
+          description: Error de validacion
+        '409':
+          description: Conflicto por unicidad
+  /bodegas/{bodegaId}:
+    get:
+      summary: Obtener detalle de bodega
+      parameters:
+        - in: path
+          name: bodegaId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Detalle de bodega
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BodegaDetail'
+        '404':
+          description: Bodega no encontrada
+    patch:
+      summary: Editar bodega
+      parameters:
+        - in: path
+          name: bodegaId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BodegaUpdate'
+      responses:
+        '200':
+          description: Bodega actualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bodega'
+        '400':
+          description: Error de validacion
+        '404':
+          description: Bodega no encontrada
+        '409':
+          description: Conflicto por unicidad
+  /bodegas/{bodegaId}/items:
+    get:
+      summary: Listar items asignados a la bodega
+      parameters:
+        - in: path
+          name: bodegaId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de items asignados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ItemAssignment'
+        '404':
+          description: Bodega no encontrada
+    post:
+      summary: Asignar items a la bodega
+      parameters:
+        - in: path
+          name: bodegaId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemAssignmentRequest'
+      responses:
+        '200':
+          description: Items asignados
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemAssignmentResponse'
+        '400':
+          description: Error de validacion
+        '404':
+          description: Bodega o items no encontrados
+        '409':
+          description: Items ya asignados
+
+components:
+  schemas:
+    Bodega:
+      type: object
+      properties:
+        id:
+          type: string
+        identificacion:
+          type: string
+        nombre:
+          type: string
+        ubicacion:
+          type: string
+          nullable: true
+        estado:
+          type: string
+        creadoEn:
+          type: string
+          format: date-time
+        actualizadoEn:
+          type: string
+          format: date-time
+      required:
+        - id
+        - identificacion
+        - nombre
+        - estado
+        - creadoEn
+        - actualizadoEn
+    BodegaCreate:
+      type: object
+      properties:
+        identificacion:
+          type: string
+        nombre:
+          type: string
+        ubicacion:
+          type: string
+          nullable: true
+        estado:
+          type: string
+      required:
+        - identificacion
+        - nombre
+    BodegaUpdate:
+      type: object
+      properties:
+        identificacion:
+          type: string
+        nombre:
+          type: string
+        ubicacion:
+          type: string
+          nullable: true
+        estado:
+          type: string
+    BodegaDetail:
+      allOf:
+        - $ref: '#/components/schemas/Bodega'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/ItemAssignment'
+    ItemAssignment:
+      type: object
+      properties:
+        id:
+          type: string
+        itemId:
+          type: string
+        bodegaId:
+          type: string
+        stockMinimo:
+          type: number
+          nullable: true
+        stockMaximo:
+          type: number
+          nullable: true
+        stockActual:
+          type: number
+        costoPromedio:
+          type: number
+      required:
+        - id
+        - itemId
+        - bodegaId
+        - stockActual
+        - costoPromedio
+    ItemAssignmentRequest:
+      type: object
+      properties:
+        itemIds:
+          type: array
+          items:
+            type: string
+      required:
+        - itemIds
+    ItemAssignmentResponse:
+      type: object
+      properties:
+        assigned:
+          type: array
+          items:
+            type: string
+        skipped:
+          type: array
+          items:
+            type: string

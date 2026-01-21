@@ -1,0 +1,83 @@
+openapi: 3.0.3
+info:
+  title: Category Actions API
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+paths:
+  /categories:
+    get:
+      summary: List categories for the table
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Category list
+  /categories/{id}:
+    get:
+      summary: Get category detail for edit screen
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CategoryId'
+      responses:
+        '200':
+          description: Category detail
+        '404':
+          description: Not found
+    put:
+      summary: Update category from edit screen
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CategoryId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryUpdate'
+      responses:
+        '200':
+          description: Category updated
+        '400':
+          description: Validation error
+        '403':
+          description: Forbidden (role)
+        '404':
+          description: Not found
+    delete:
+      summary: Delete category from action menu
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CategoryId'
+      responses:
+        '200':
+          description: Category deleted; items become uncategorized
+        '403':
+          description: Forbidden (role)
+        '404':
+          description: Not found
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: session
+  parameters:
+    CategoryId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    CategoryUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true

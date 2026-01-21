@@ -1,0 +1,113 @@
+openapi: 3.0.3
+info:
+  title: Categories API
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+paths:
+  /categories:
+    get:
+      summary: List categories
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Category list
+    post:
+      summary: Create category
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryCreate'
+      responses:
+        '201':
+          description: Category created
+        '400':
+          description: Validation error
+        '403':
+          description: Forbidden (role)
+  /categories/{id}:
+    get:
+      summary: Get category detail
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CategoryId'
+      responses:
+        '200':
+          description: Category detail
+        '404':
+          description: Not found
+    put:
+      summary: Update category
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CategoryId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryUpdate'
+      responses:
+        '200':
+          description: Category updated
+        '400':
+          description: Validation error
+        '403':
+          description: Forbidden (role)
+        '404':
+          description: Not found
+    delete:
+      summary: Delete category
+      security:
+        - sessionAuth: []
+      parameters:
+        - $ref: '#/components/parameters/CategoryId'
+      responses:
+        '200':
+          description: Category deleted; affected items now uncategorized
+        '403':
+          description: Forbidden (role)
+        '404':
+          description: Not found
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: session
+  parameters:
+    CategoryId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    CategoryBase:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+      required:
+        - name
+    CategoryCreate:
+      allOf:
+        - $ref: '#/components/schemas/CategoryBase'
+    CategoryUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true

@@ -1,0 +1,905 @@
+openapi: 3.0.3
+info:
+  title: Sistema Kardex NIIF API
+  version: 1.1.0
+  description: Contratos para autenticacion, maestros, movimientos, reportes y dashboard.
+servers:
+  - url: /api
+security:
+  - bearerAuth: []
+paths:
+  /auth/login:
+    post:
+      summary: Iniciar sesion
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Sesion iniciada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Credenciales invalidas
+  /auth/logout:
+    post:
+      summary: Cerrar sesion
+      responses:
+        '204':
+          description: Sesion cerrada
+  /auth/recuperar:
+    post:
+      summary: Recuperar contrasena
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordRecoveryRequest'
+      responses:
+        '202':
+          description: Solicitud recibida
+  /users:
+    get:
+      summary: Listar usuarios
+      responses:
+        '200':
+          description: Lista de usuarios
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Usuario'
+    post:
+      summary: Crear usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsuarioCreate'
+      responses:
+        '201':
+          description: Usuario creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+  /users/{id}:
+    get:
+      summary: Obtener usuario
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Usuario
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+    put:
+      summary: Actualizar usuario
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsuarioUpdate'
+      responses:
+        '200':
+          description: Usuario actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+    delete:
+      summary: Desactivar usuario
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '204':
+          description: Usuario desactivado
+  /items:
+    get:
+      summary: Listar items
+      responses:
+        '200':
+          description: Lista de items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Item'
+    post:
+      summary: Crear item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemCreate'
+      responses:
+        '201':
+          description: Item creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+  /items/{id}:
+    get:
+      summary: Obtener item
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+    put:
+      summary: Actualizar item
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemUpdate'
+      responses:
+        '200':
+          description: Item actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+    delete:
+      summary: Desactivar item
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '204':
+          description: Item desactivado
+  /warehouses:
+    get:
+      summary: Listar bodegas
+      responses:
+        '200':
+          description: Lista de bodegas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Bodega'
+    post:
+      summary: Crear bodega
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BodegaCreate'
+      responses:
+        '201':
+          description: Bodega creada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bodega'
+  /warehouses/{id}:
+    get:
+      summary: Obtener bodega
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Bodega
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bodega'
+    put:
+      summary: Actualizar bodega
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BodegaUpdate'
+      responses:
+        '200':
+          description: Bodega actualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bodega'
+    delete:
+      summary: Desactivar bodega
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '204':
+          description: Bodega desactivada
+  /warehouses/{id}/items:
+    get:
+      summary: Listar items por bodega
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Lista item-bodega
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ItemBodega'
+    put:
+      summary: Actualizar min/max por item-bodega
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemBodegaUpdate'
+      responses:
+        '200':
+          description: Item-bodega actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemBodega'
+  /third-parties:
+    get:
+      summary: Listar terceros
+      responses:
+        '200':
+          description: Lista de terceros
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tercero'
+    post:
+      summary: Crear tercero
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TerceroCreate'
+      responses:
+        '201':
+          description: Tercero creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tercero'
+  /third-parties/{id}:
+    get:
+      summary: Obtener tercero
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Tercero
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tercero'
+    put:
+      summary: Actualizar tercero
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TerceroUpdate'
+      responses:
+        '200':
+          description: Tercero actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tercero'
+    delete:
+      summary: Desactivar tercero
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '204':
+          description: Tercero desactivado
+  /movements:
+    get:
+      summary: Listar movimientos
+      responses:
+        '200':
+          description: Lista de movimientos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Movimiento'
+    post:
+      summary: Crear movimiento en borrador
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovimientoCreate'
+      responses:
+        '201':
+          description: Movimiento creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movimiento'
+  /movements/{id}:
+    get:
+      summary: Obtener movimiento
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Movimiento
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movimiento'
+    put:
+      summary: Actualizar movimiento en borrador
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovimientoUpdate'
+      responses:
+        '200':
+          description: Movimiento actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movimiento'
+  /movements/{id}/publish:
+    post:
+      summary: Publicar movimiento
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Movimiento publicado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movimiento'
+  /movements/{id}/cancel:
+    post:
+      summary: Anular movimiento
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Movimiento anulado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movimiento'
+  /kardex:
+    get:
+      summary: Consultar kardex por item
+      parameters:
+        - name: itemId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: desde
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: hasta
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Kardex del item
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/KardexEntry'
+  /reports/kardex/export:
+    get:
+      summary: Exportar kardex a CSV
+      parameters:
+        - name: itemId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: desde
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: hasta
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Archivo CSV
+          content:
+            text/csv:
+              schema:
+                type: string
+  /dashboard/summary:
+    get:
+      summary: Resumen de dashboard
+      responses:
+        '200':
+          description: Resumen de inventario
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardResumen'
+  /imports/items:
+    post:
+      summary: Importar items desde CSV
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                archivo:
+                  type: string
+                  format: binary
+      responses:
+        '202':
+          description: Importacion aceptada
+  /exports/items:
+    get:
+      summary: Exportar catalogo de items
+      responses:
+        '200':
+          description: Archivo CSV
+          content:
+            text/csv:
+              schema:
+                type: string
+  /audit-log:
+    get:
+      summary: Consultar bitacora de auditoria
+      responses:
+        '200':
+          description: Lista de eventos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AuditEvent'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    IdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+  schemas:
+    LoginRequest:
+      type: object
+      required: [email, contrasena]
+      properties:
+        email:
+          type: string
+          format: email
+        contrasena:
+          type: string
+          format: password
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        usuario:
+          $ref: '#/components/schemas/Usuario'
+    PasswordRecoveryRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+    Usuario:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        nombre:
+          type: string
+        estado:
+          type: string
+          enum: [activo, inactivo]
+        rolId:
+          type: string
+    UsuarioCreate:
+      type: object
+      required: [email, nombre, rolId]
+      properties:
+        email:
+          type: string
+        nombre:
+          type: string
+        rolId:
+          type: string
+        contrasenaTemporal:
+          type: string
+    UsuarioUpdate:
+      type: object
+      properties:
+        nombre:
+          type: string
+        estado:
+          type: string
+          enum: [activo, inactivo]
+        rolId:
+          type: string
+    Item:
+      type: object
+      properties:
+        id:
+          type: string
+        codigo:
+          type: string
+        descripcion:
+          type: string
+        unidadMedida:
+          type: string
+        categoria:
+          type: string
+        costoPromedio:
+          type: number
+        estado:
+          type: string
+          enum: [activo, inactivo]
+        imagenUrl:
+          type: string
+    ItemCreate:
+      type: object
+      required: [codigo, descripcion, unidadMedida]
+      properties:
+        codigo:
+          type: string
+        descripcion:
+          type: string
+        unidadMedida:
+          type: string
+        categoria:
+          type: string
+        estado:
+          type: string
+          enum: [activo, inactivo]
+        imagenUrl:
+          type: string
+    ItemUpdate:
+      type: object
+      properties:
+        descripcion:
+          type: string
+        unidadMedida:
+          type: string
+        categoria:
+          type: string
+        estado:
+          type: string
+          enum: [activo, inactivo]
+        imagenUrl:
+          type: string
+    Bodega:
+      type: object
+      properties:
+        id:
+          type: string
+        identificacion:
+          type: string
+        nombre:
+          type: string
+        ubicacion:
+          type: string
+        estado:
+          type: string
+          enum: [activo, inactivo]
+    BodegaCreate:
+      type: object
+      required: [identificacion, nombre]
+      properties:
+        identificacion:
+          type: string
+        nombre:
+          type: string
+        ubicacion:
+          type: string
+        estado:
+          type: string
+          enum: [activo, inactivo]
+    BodegaUpdate:
+      type: object
+      properties:
+        nombre:
+          type: string
+        ubicacion:
+          type: string
+        estado:
+          type: string
+          enum: [activo, inactivo]
+    ItemBodega:
+      type: object
+      properties:
+        id:
+          type: string
+        itemId:
+          type: string
+        bodegaId:
+          type: string
+        stockMinimo:
+          type: number
+        stockMaximo:
+          type: number
+        stockActual:
+          type: number
+    ItemBodegaUpdate:
+      type: object
+      required: [itemId, stockMinimo, stockMaximo]
+      properties:
+        itemId:
+          type: string
+        stockMinimo:
+          type: number
+        stockMaximo:
+          type: number
+    Tercero:
+      type: object
+      properties:
+        id:
+          type: string
+        tipo:
+          type: string
+          enum: [proveedor, cliente]
+        identificacion:
+          type: string
+        nombre:
+          type: string
+        telefono:
+          type: string
+        email:
+          type: string
+        direccion:
+          type: string
+        estado:
+          type: string
+          enum: [activo, inactivo]
+    TerceroCreate:
+      type: object
+      required: [tipo, identificacion, nombre]
+      properties:
+        tipo:
+          type: string
+          enum: [proveedor, cliente]
+        identificacion:
+          type: string
+        nombre:
+          type: string
+        telefono:
+          type: string
+        email:
+          type: string
+        direccion:
+          type: string
+        estado:
+          type: string
+          enum: [activo, inactivo]
+    TerceroUpdate:
+      type: object
+      properties:
+        nombre:
+          type: string
+        telefono:
+          type: string
+        email:
+          type: string
+        direccion:
+          type: string
+        estado:
+          type: string
+          enum: [activo, inactivo]
+    Movimiento:
+      type: object
+      properties:
+        id:
+          type: string
+        tipo:
+          type: string
+          enum: [entrada, salida, transferencia, ajuste]
+        estado:
+          type: string
+          enum: [borrador, publicado, anulado]
+        fecha:
+          type: string
+          format: date-time
+        bodegaOrigenId:
+          type: string
+        bodegaDestinoId:
+          type: string
+        terceroId:
+          type: string
+        usuarioId:
+          type: string
+        observacion:
+          type: string
+        detalles:
+          type: array
+          items:
+            $ref: '#/components/schemas/DetalleMovimiento'
+    MovimientoCreate:
+      type: object
+      required: [tipo, fecha, detalles]
+      properties:
+        tipo:
+          type: string
+          enum: [entrada, salida, transferencia, ajuste]
+        fecha:
+          type: string
+          format: date-time
+        bodegaOrigenId:
+          type: string
+        bodegaDestinoId:
+          type: string
+        terceroId:
+          type: string
+        observacion:
+          type: string
+        detalles:
+          type: array
+          items:
+            $ref: '#/components/schemas/DetalleMovimientoCreate'
+    MovimientoUpdate:
+      type: object
+      properties:
+        fecha:
+          type: string
+          format: date-time
+        bodegaOrigenId:
+          type: string
+        bodegaDestinoId:
+          type: string
+        terceroId:
+          type: string
+        observacion:
+          type: string
+        detalles:
+          type: array
+          items:
+            $ref: '#/components/schemas/DetalleMovimientoCreate'
+    DetalleMovimiento:
+      type: object
+      properties:
+        itemId:
+          type: string
+        cantidad:
+          type: number
+        costoUnitario:
+          type: number
+        costoTotal:
+          type: number
+    DetalleMovimientoCreate:
+      type: object
+      required: [itemId, cantidad]
+      properties:
+        itemId:
+          type: string
+        cantidad:
+          type: number
+    KardexEntry:
+      type: object
+      properties:
+        fecha:
+          type: string
+          format: date-time
+        tipoMovimiento:
+          type: string
+        cantidadEntrada:
+          type: number
+        cantidadSalida:
+          type: number
+        saldoFisico:
+          type: number
+        costoPromedio:
+          type: number
+        saldoValorizado:
+          type: number
+    DashboardResumen:
+      type: object
+      properties:
+        existenciasTotales:
+          type: number
+        valorizacionTotal:
+          type: number
+        alertasStockCritico:
+          type: number
+        ultimosMovimientos:
+          type: array
+          items:
+            $ref: '#/components/schemas/Movimiento'
+        indicadoresRotacion:
+          type: array
+          items:
+            type: object
+            properties:
+              itemId:
+                type: string
+              indice:
+                type: number
+    AuditEvent:
+      type: object
+      properties:
+        id:
+          type: string
+        entidad:
+          type: string
+        entidadId:
+          type: string
+        accion:
+          type: string
+        usuarioId:
+          type: string
+        fecha:
+          type: string
+          format: date-time
+        metadata:
+          type: object

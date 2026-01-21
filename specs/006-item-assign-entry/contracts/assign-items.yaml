@@ -1,0 +1,308 @@
+openapi: 3.1.0
+info:
+  title: Assign Items to Bodega API
+  description: |
+    API para asignar items a bodegas con creación automática de movimiento de entrada.
+
+    Cuando se asignan items con stock inicial > 0, se crea automáticamente un movimiento
+    de tipo "entrada" que se publica inmediatamente para que el kardex refleje el inventario.
+  version: 1.0.0
+
+servers:
+  - url: /api
+    description: API base path
+
+paths:
+  /bodegas/{bodegaId}/items:
+    post:
+      operationId: assignItemsToBodega
+      summary: Asignar items a una bodega
+      description: |
+        Asigna uno o más items a una bodega. Si algún item tiene stock inicial > 0,
+        se crea automáticamente un movimiento de entrada publicado.
+
+        **Comportamiento:**
+        - Transacción atómica: si cualquier item falla, ninguno se asigna
+        - Items con stock = 0: se crean en item_bodegas sin movimiento
+        - Items con stock > 0: se crea UN movimiento con múltiples detalles
+        - El movimiento se publica automáticamente
+
+        **Validaciones:**
+        - Bodega debe existir y estar activa
+        - Items deben existir
+        - Items no deben estar ya asignados a la bodega
+        - Stock y costo no pueden ser negativos
+        - Máximo 50 items por operación
+      tags:
+        - Bodegas
+        - Items
+      parameters:
+        - name: bodegaId
+          in: path
+          required: true
+          description: ID de la bodega destino
+          schema:
+            type: string
+            format: uuid
+            example: "70280634-0dd5-4e93-a1d7-a962ef1fe295"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignItemsRequest'
+            examples:
+              conStock:
+                summary: Items con stock inicial
+                value:
+                  items:
+                    - itemId: "efaffb8f-cf83-4798-bd06-ad3996a8c515"
+                      stockInicial: 15
+                      costoUnitario: 72.67
+                    - itemId: "abc12345-1234-1234-1234-123456789abc"
+                      stockInicial: 5
+                      costoUnitario: 50
+              sinStock:
+                summary: Items sin stock (solo asignación)
+                value:
+                  items:
+                    - itemId: "efaffb8f-cf83-4798-bd06-ad3996a8c515"
+                    - itemId: "abc12345-1234-1234-1234-123456789abc"
+              mixto:
+                summary: Mezcla de items con y sin stock
+                value:
+                  items:
+                    - itemId: "efaffb8f-cf83-4798-bd06-ad3996a8c515"
+                      stockInicial: 15
+                      costoUnitario: 72.67
+                    - itemId: "abc12345-1234-1234-1234-123456789abc"
+                      stockInicial: 0
+                      costoUnitario: 0
+      responses:
+        '200':
+          description: Items asignados exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignItemsSuccessResponse'
+              examples:
+                conMovimiento:
+                  summary: Con movimiento creado
+                  value:
+                    success: true
+                    data:
+                      assigned:
+                        - "efaffb8f-cf83-4798-bd06-ad3996a8c515"
+                        - "abc12345-1234-1234-1234-123456789abc"
+                      movimientoId: "mov-12345-uuid"
+                      message: "2 items asignados. Movimiento de entrada creado y publicado."
+                sinMovimiento:
+                  summary: Sin movimiento (todos stock=0)
+                  value:
+                    success: true
+                    data:
+                      assigned:
+                        - "efaffb8f-cf83-4798-bd06-ad3996a8c515"
+                      movimientoId: null
+                      message: "1 item asignado. No se creó movimiento (stock inicial = 0)."
+        '400':
+          description: Error de validación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignItemsErrorResponse'
+              examples:
+                itemsDuplicados:
+                  summary: Items ya asignados a la bodega
+                  value:
+                    success: false
+                    error:
+                      code: "ITEMS_ALREADY_ASSIGNED"
+                      message: "Algunos items ya están asignados a esta bodega"
+                      details:
+                        itemsYaAsignados:
+                          - "efaffb8f-cf83-4798-bd06-ad3996a8c515"
+                stockNegativo:
+                  summary: Stock negativo
+                  value:
+                    success: false
+                    error:
+                      code: "VALIDATION_ERROR"
+                      message: "Stock inicial no puede ser negativo"
+                      details: null
+        '404':
+          description: Bodega o item no encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignItemsErrorResponse'
+              examples:
+                bodegaNoExiste:
+                  summary: Bodega no existe
+                  value:
+                    success: false
+                    error:
+                      code: "BODEGA_NOT_FOUND"
+                      message: "Bodega no encontrada"
+                      details: null
+                bodegaInactiva:
+                  summary: Bodega inactiva
+                  value:
+                    success: false
+                    error:
+                      code: "BODEGA_INACTIVE"
+                      message: "No se pueden asignar items a una bodega inactiva"
+                      details:
+                        bodegaInactiva: true
+        '500':
+          description: Error interno del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignItemsErrorResponse'
+
+components:
+  schemas:
+    AssignItemInput:
+      type: object
+      description: Item a asignar con stock y costo opcionales
+      required:
+        - itemId
+      properties:
+        itemId:
+          type: string
+          format: uuid
+          description: ID del item a asignar
+          example: "efaffb8f-cf83-4798-bd06-ad3996a8c515"
+        stockInicial:
+          type: number
+          format: decimal
+          minimum: 0
+          default: 0
+          description: |
+            Cantidad inicial de stock. Si es mayor a 0, se crea un movimiento de entrada.
+            Si es 0 o no se especifica, solo se crea la relación item-bodega.
+          example: 15
+        costoUnitario:
+          type: number
+          format: decimal
+          minimum: 0
+          default: 0
+          description: |
+            Costo unitario del item. Usado para calcular el costo promedio ponderado.
+            Puede ser 0 para items de cortesía o donaciones.
+          example: 72.67
+
+    AssignItemsRequest:
+      type: object
+      description: Request para asignar múltiples items a una bodega
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          description: Lista de items a asignar
+          minItems: 1
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/AssignItemInput'
+
+    AssignItemsSuccessResponse:
+      type: object
+      description: Respuesta exitosa de asignación
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        data:
+          type: object
+          required:
+            - assigned
+            - movimientoId
+            - message
+          properties:
+            assigned:
+              type: array
+              description: IDs de items asignados exitosamente
+              items:
+                type: string
+                format: uuid
+            movimientoId:
+              type: string
+              format: uuid
+              nullable: true
+              description: |
+                ID del movimiento de entrada creado.
+                Es null si todos los items tenían stock = 0.
+            message:
+              type: string
+              description: Mensaje descriptivo del resultado
+
+    AssignItemsErrorResponse:
+      type: object
+      description: Respuesta de error
+      required:
+        - success
+        - error
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        error:
+          type: object
+          required:
+            - code
+            - message
+          properties:
+            code:
+              type: string
+              enum:
+                - VALIDATION_ERROR
+                - ITEMS_ALREADY_ASSIGNED
+                - BODEGA_NOT_FOUND
+                - BODEGA_INACTIVE
+                - ITEMS_NOT_FOUND
+                - INTERNAL_ERROR
+              description: Código de error para manejo programático
+            message:
+              type: string
+              description: Mensaje de error legible
+            details:
+              type: object
+              nullable: true
+              description: Detalles adicionales del error
+              properties:
+                itemsYaAsignados:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: IDs de items que ya estaban asignados
+                bodegaInactiva:
+                  type: boolean
+                  description: Indica si la bodega está inactiva
+                itemsInexistentes:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: IDs de items que no existen
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token de autenticación better-auth
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: Bodegas
+    description: Operaciones relacionadas con bodegas/almacenes
+  - name: Items
+    description: Operaciones relacionadas con items/productos

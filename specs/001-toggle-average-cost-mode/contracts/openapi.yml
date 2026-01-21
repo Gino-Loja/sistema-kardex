@@ -1,0 +1,48 @@
+openapi: 3.0.0
+info:
+  title: Warehouse API
+  version: 1.0.0
+  description: API for managing warehouses.
+
+paths:
+  /api/bodegas/{id}:
+    patch:
+      summary: Update warehouse settings
+      description: Partially updates the settings for a specific warehouse.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The ID of the warehouse to update.
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                autoUpdateAverageCost:
+                  type: boolean
+                  description: "Flag to enable or disable automatic average cost updates. `false` for Manual, `true` for Automatic."
+              example:
+                autoUpdateAverageCost: true
+      responses:
+        '200':
+          description: The setting was updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '400':
+          description: Bad request (e.g., invalid input).
+        '404':
+          description: Warehouse not found.
+        '500':
+          description: Internal server error.

@@ -1,0 +1,19 @@
+.sectionSummary {
+  list-style: none;
+}
+
+.sectionSummary::-webkit-details-marker {
+  display: none;
+}
+
+.scrollArea {
+  max-height: 16rem;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+@media (max-width: 768px) {
+  .scrollArea {
+    max-height: 50vh;
+  }
+}

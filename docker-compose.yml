@@ -1,0 +1,8 @@
+services:
+  production-sistema-kardex:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: production-sistema-kardex
+    ports:
+      - "3003:3000"

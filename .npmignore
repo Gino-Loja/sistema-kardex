@@ -1,0 +1,14 @@
+node_modules/
+.next/
+out/
+build/
+dist/
+coverage/
+.env*
+.git/
+.gitignore
+.vscode/
+.idea/
+*.log
+*.tmp
+*.swp

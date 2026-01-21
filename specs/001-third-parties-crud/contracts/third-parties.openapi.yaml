@@ -1,0 +1,193 @@
+openapi: 3.0.3
+info:
+  title: Third Parties API
+  version: 1.0.0
+paths:
+  /third-parties:
+    get:
+      summary: List third parties
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          required: true
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            enum: [20]
+          required: true
+      responses:
+        "200":
+          description: Paginated list of third parties
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThirdPartyListResponse"
+    post:
+      summary: Create a third party
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ThirdPartyCreate"
+      responses:
+        "201":
+          description: Third party created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThirdParty"
+        "400":
+          description: Validation error
+  /third-parties/{id}:
+    get:
+      summary: View a third party
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Third party detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThirdParty"
+        "404":
+          description: Not found
+    put:
+      summary: Update a third party
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ThirdPartyUpdate"
+      responses:
+        "200":
+          description: Third party updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThirdParty"
+        "400":
+          description: Validation error
+        "404":
+          description: Not found
+    delete:
+      summary: Delete a third party
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+components:
+  schemas:
+    ThirdParty:
+      type: object
+      required:
+        - id
+        - identifier
+        - displayName
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+        identifier:
+          type: string
+        displayName:
+          type: string
+        contactName:
+          type: string
+          nullable: true
+        contactEmail:
+          type: string
+          nullable: true
+        contactPhone:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [active, inactive]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    ThirdPartyCreate:
+      type: object
+      required:
+        - identifier
+        - displayName
+      properties:
+        identifier:
+          type: string
+        displayName:
+          type: string
+        contactName:
+          type: string
+        contactEmail:
+          type: string
+        contactPhone:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+    ThirdPartyUpdate:
+      type: object
+      properties:
+        identifier:
+          type: string
+        displayName:
+          type: string
+        contactName:
+          type: string
+        contactEmail:
+          type: string
+        contactPhone:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+    ThirdPartyListResponse:
+      type: object
+      required:
+        - items
+        - page
+        - pageSize
+        - totalItems
+        - totalPages
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ThirdParty"
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalItems:
+          type: integer
+        totalPages:
+          type: integer

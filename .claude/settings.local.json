@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git fetch:*)",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \".specify/scripts/powershell/create-new-feature.ps1\" -Json -Number 2 -ShortName \"user-crud\" \"quiero tener el crud entero de usuarios en donde http://localhost:3000/settings/users/create sea el formulario para crear y http://localhost:3000/settings/users/[id]/edit para editar y poder eliminar el usuario. debes hacerlo median better-auth la libreria que controla esto de los usuarios y la autenticacion. La tabla debe tener paginacion y se deben mostrar 20 filas debe haber filtros por estado y buscar por nombre.\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \".specify/scripts/powershell/setup-plan.ps1\" -Json)",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \".specify/scripts/powershell/update-agent-context.ps1\" -AgentType claude)",
+      "Bash(powershell -ExecutionPolicy Bypass -File:*)"
+    ]
+  }
+}

@@ -1,0 +1,1 @@
+ALTER TABLE "movimientos" ADD COLUMN "version" numeric DEFAULT 1 NOT NULL;

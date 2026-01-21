@@ -1,0 +1,401 @@
+openapi: 3.0.3
+info:
+  title: Movements API
+  description: CRUD API for inventory movements
+  version: 1.0.0
+
+paths:
+  /api/movements:
+    get:
+      summary: List movements with pagination and filters
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: tipo
+          in: query
+          schema:
+            type: string
+            enum: [entrada, salida, transferencia]
+        - name: estado
+          in: query
+          schema:
+            type: string
+            enum: [borrador, publicado, anulado]
+        - name: fechaDesde
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: fechaHasta
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by documento referencia or observacion
+      responses:
+        '200':
+          description: Paginated list of movements
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  movements:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MovementSummary'
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  pageSize:
+                    type: integer
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+
+    post:
+      summary: Create a new movement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovementCreate'
+      responses:
+        '201':
+          description: Movement created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movement'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/movements/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      summary: Get movement by ID
+      responses:
+        '200':
+          description: Movement details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movement'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      summary: Update movement (only borrador state)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovementUpdate'
+      responses:
+        '200':
+          description: Movement updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Movement'
+        '400':
+          description: Validation error or movement not editable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Delete movement (only borrador state)
+      responses:
+        '200':
+          description: Movement deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+        '400':
+          description: Movement not deletable (not in borrador state)
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  schemas:
+    MovementCreate:
+      type: object
+      required:
+        - tipo
+        - fecha
+        - detalles
+      properties:
+        tipo:
+          type: string
+          enum: [entrada, salida, transferencia]
+        fecha:
+          type: string
+          format: date-time
+        bodegaOrigenId:
+          type: string
+          format: uuid
+          description: Required for salida, transferencia
+        bodegaDestinoId:
+          type: string
+          format: uuid
+          description: Required for entrada, transferencia
+        terceroId:
+          type: string
+          format: uuid
+        documentoReferencia:
+          type: string
+          maxLength: 100
+        observacion:
+          type: string
+          maxLength: 500
+        detalles:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/DetalleCreate'
+
+    MovementUpdate:
+      type: object
+      properties:
+        tipo:
+          type: string
+          enum: [entrada, salida, transferencia]
+        fecha:
+          type: string
+          format: date-time
+        bodegaOrigenId:
+          type: string
+          format: uuid
+          nullable: true
+        bodegaDestinoId:
+          type: string
+          format: uuid
+          nullable: true
+        terceroId:
+          type: string
+          format: uuid
+          nullable: true
+        documentoReferencia:
+          type: string
+          maxLength: 100
+          nullable: true
+        observacion:
+          type: string
+          maxLength: 500
+          nullable: true
+        detalles:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/DetalleCreate'
+
+    DetalleCreate:
+      type: object
+      required:
+        - itemId
+        - cantidad
+      properties:
+        itemId:
+          type: string
+          format: uuid
+        cantidad:
+          type: number
+          minimum: 0.0001
+        costoUnitario:
+          type: number
+          minimum: 0
+
+    Movement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tipo:
+          type: string
+          enum: [entrada, salida, transferencia]
+        estado:
+          type: string
+          enum: [borrador, publicado, anulado]
+        fecha:
+          type: string
+          format: date-time
+        bodegaOrigen:
+          $ref: '#/components/schemas/BodegaRef'
+        bodegaDestino:
+          $ref: '#/components/schemas/BodegaRef'
+        tercero:
+          $ref: '#/components/schemas/TerceroRef'
+        usuario:
+          $ref: '#/components/schemas/UsuarioRef'
+        documentoReferencia:
+          type: string
+        observacion:
+          type: string
+        detalles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Detalle'
+        totalEstimado:
+          type: number
+        creadoEn:
+          type: string
+          format: date-time
+        actualizadoEn:
+          type: string
+          format: date-time
+
+    MovementSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tipo:
+          type: string
+        estado:
+          type: string
+        fecha:
+          type: string
+          format: date-time
+        bodegaOrigen:
+          $ref: '#/components/schemas/BodegaRef'
+        bodegaDestino:
+          $ref: '#/components/schemas/BodegaRef'
+        tercero:
+          $ref: '#/components/schemas/TerceroRef'
+        totalEstimado:
+          type: number
+        cantidadItems:
+          type: integer
+
+    Detalle:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        item:
+          $ref: '#/components/schemas/ItemRef'
+        cantidad:
+          type: number
+        costoUnitario:
+          type: number
+        costoTotal:
+          type: number
+
+    BodegaRef:
+      type: object
+      nullable: true
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+
+    TerceroRef:
+      type: object
+      nullable: true
+      properties:
+        id:
+          type: string
+          format: uuid
+        nombre:
+          type: string
+
+    UsuarioRef:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+
+    ItemRef:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        codigo:
+          type: string
+        nombre:
+          type: string
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+  responses:
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthenticated:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

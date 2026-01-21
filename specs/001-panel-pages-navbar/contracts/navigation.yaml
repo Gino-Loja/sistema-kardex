@@ -1,0 +1,62 @@
+openapi: 3.0.3
+info:
+  title: Panel Navigation API
+  version: 1.0.0
+paths:
+  /api/navigation:
+    get:
+      summary: Obtener navegacion del panel para el usuario actual
+      responses:
+        '200':
+          description: Navegacion permitida por rol
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NavigationResponse'
+components:
+  schemas:
+    NavigationResponse:
+      type: object
+      required:
+        - sections
+      properties:
+        sections:
+          type: array
+          items:
+            $ref: '#/components/schemas/NavigationSection'
+    NavigationSection:
+      type: object
+      required:
+        - id
+        - name
+        - order
+        - items
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        order:
+          type: integer
+        isCollapsible:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/NavigationItem'
+    NavigationItem:
+      type: object
+      required:
+        - id
+        - label
+        - route
+        - order
+      properties:
+        id:
+          type: string
+        label:
+          type: string
+        route:
+          type: string
+        order:
+          type: integer

@@ -1,0 +1,185 @@
+openapi: 3.0.3
+info:
+  title: Items and Categories API
+  version: 1.0.0
+paths:
+  /api/categories:
+    get:
+      summary: List categories
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+    post:
+      summary: Create category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '409':
+          description: Name already exists
+  /api/categories/{id}:
+    get:
+      summary: Get category
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '404':
+          description: Not found
+    put:
+      summary: Update category
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryUpdate'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '404':
+          description: Not found
+        '409':
+          description: Name already exists
+    delete:
+      summary: Delete category
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content
+  /api/items:
+    post:
+      summary: Create item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '400':
+          description: Validation error
+  /api/items/{id}:
+    put:
+      summary: Update item
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemUpdate'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '404':
+          description: Not found
+components:
+  schemas:
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+        nombre:
+          type: string
+        estado:
+          type: string
+          enum: [active, inactive]
+      required: [id, nombre, estado]
+    CategoryCreate:
+      type: object
+      properties:
+        nombre:
+          type: string
+      required: [nombre]
+    CategoryUpdate:
+      type: object
+      properties:
+        nombre:
+          type: string
+        estado:
+          type: string
+          enum: [active, inactive]
+    Item:
+      type: object
+      properties:
+        id:
+          type: string
+        nombre:
+          type: string
+        categoriaId:
+          type: string
+          nullable: true
+      required: [id, nombre]
+    ItemCreate:
+      type: object
+      properties:
+        nombre:
+          type: string
+        categoriaId:
+          type: string
+          nullable: true
+      required: [nombre]
+    ItemUpdate:
+      type: object
+      properties:
+        nombre:
+          type: string
+        categoriaId:
+          type: string
+          nullable: true

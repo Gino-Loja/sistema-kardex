@@ -1,0 +1,228 @@
+openapi: 3.0.3
+info:
+  title: Asignacion de items a bodega
+  version: 1.0.0
+servers:
+  - url: /api
+paths:
+  /items:
+    get:
+      summary: Buscar items para asignacion
+      parameters:
+        - in: query
+          name: search
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: pageSize
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Lista de items
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemSearchResult'
+  /bodegas/{bodegaId}/items:
+    get:
+      summary: Listar items asignados con paginacion
+      parameters:
+        - in: path
+          name: bodegaId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: page
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: pageSize
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Items asignados paginados
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignedItemsPage'
+    post:
+      summary: Asignar items a una bodega
+      parameters:
+        - in: path
+          name: bodegaId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignItemsRequest'
+      responses:
+        '200':
+          description: Items asignados
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignedItemsResponse'
+  /bodegas/{bodegaId}/items/{itemId}:
+    patch:
+      summary: Actualizar stock y costo de un item asignado
+      parameters:
+        - in: path
+          name: bodegaId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: itemId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignedItemUpdate'
+      responses:
+        '200':
+          description: Item actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignedItem'
+    delete:
+      summary: Eliminar item asignado de la bodega
+      parameters:
+        - in: path
+          name: bodegaId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: itemId
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Eliminado
+components:
+  schemas:
+    ItemSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        nombre:
+          type: string
+        codigo:
+          type: string
+      required:
+        - id
+        - nombre
+    ItemSearchResult:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemSummary'
+        total:
+          type: integer
+      required:
+        - items
+        - total
+    AssignedItem:
+      type: object
+      properties:
+        itemId:
+          type: string
+        bodegaId:
+          type: string
+        nombre:
+          type: string
+        codigo:
+          type: string
+        stockMinimo:
+          type: number
+        stockActual:
+          type: number
+        stockMaximo:
+          type: number
+        costoPromedio:
+          type: number
+      required:
+        - itemId
+        - bodegaId
+        - nombre
+        - stockMinimo
+        - stockActual
+        - stockMaximo
+        - costoPromedio
+    AssignedItemsPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssignedItem'
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+      required:
+        - items
+        - page
+        - pageSize
+        - total
+    AssignItemsRequest:
+      type: object
+      properties:
+        itemIds:
+          type: array
+          items:
+            type: string
+      required:
+        - itemIds
+    AssignedItemsResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssignedItem'
+      required:
+        - items
+    AssignedItemUpdate:
+      type: object
+      properties:
+        stockMinimo:
+          type: number
+        stockActual:
+          type: number
+        stockMaximo:
+          type: number
+        costoPromedio:
+          type: number
+      additionalProperties: false

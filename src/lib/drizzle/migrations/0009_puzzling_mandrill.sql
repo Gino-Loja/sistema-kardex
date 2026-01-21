@@ -1,0 +1,1 @@
+ALTER TABLE "bodegas" ADD COLUMN "auto_update_average_cost" boolean DEFAULT false NOT NULL;

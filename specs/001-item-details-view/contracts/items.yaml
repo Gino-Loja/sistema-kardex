@@ -1,0 +1,62 @@
+openapi: 3.0.3
+info:
+  title: Items API
+  version: 1.0.0
+
+paths:
+  /items/{id}:
+    get:
+      summary: Obtener detalles de un item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Detalles del item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItemDetail"
+        "404":
+          description: Item no encontrado
+    delete:
+      summary: Eliminar un item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Item eliminado
+        "404":
+          description: Item no encontrado
+
+components:
+  schemas:
+    ItemDetail:
+      type: object
+      required:
+        - id
+        - nombre
+        - codigo
+        - categoria
+        - unidad
+        - estado
+      properties:
+        id:
+          type: string
+        nombre:
+          type: string
+        codigo:
+          type: string
+        categoria:
+          type: string
+        unidad:
+          type: string
+        estado:
+          type: string

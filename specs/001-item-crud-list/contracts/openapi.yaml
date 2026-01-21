@@ -1,0 +1,208 @@
+openapi: 3.0.3
+info:
+  title: Item CRUD API
+  version: 1.0.0
+paths:
+  /items:
+    get:
+      summary: List items
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          description: Page number (1-based)
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: Items per page (default 20)
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Partial match on item name/description
+        - in: query
+          name: status
+          schema:
+            type: string
+          description: Item status filter
+        - in: query
+          name: dateFrom
+          schema:
+            type: string
+            format: date-time
+          description: Created date start (inclusive)
+        - in: query
+          name: dateTo
+          schema:
+            type: string
+            format: date-time
+          description: Created date end (inclusive)
+      responses:
+        '200':
+          description: Paginated items
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemListResponse'
+    post:
+      summary: Create item
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ItemCreateRequest'
+      responses:
+        '201':
+          description: Item created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+  /items/{id}:
+    get:
+      summary: Get item by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '404':
+          description: Not found
+    patch:
+      summary: Update item
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ItemUpdateRequest'
+      responses:
+        '200':
+          description: Item updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+    delete:
+      summary: Delete item
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Item deleted
+
+components:
+  schemas:
+    Item:
+      type: object
+      properties:
+        id:
+          type: string
+        codigo:
+          type: string
+        descripcion:
+          type: string
+        unidad_medida:
+          type: string
+        categoria:
+          type: string
+          nullable: true
+        costo_promedio:
+          type: number
+        estado:
+          type: string
+        imagen_url:
+          type: string
+          nullable: true
+        creado_en:
+          type: string
+          format: date-time
+        actualizado_en:
+          type: string
+          format: date-time
+      required:
+        - id
+        - codigo
+        - descripcion
+        - unidad_medida
+        - estado
+        - creado_en
+        - actualizado_en
+    ItemListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Item'
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        total:
+          type: integer
+      required:
+        - items
+        - page
+        - pageSize
+        - total
+    ItemCreateRequest:
+      type: object
+      properties:
+        codigo:
+          type: string
+        descripcion:
+          type: string
+        unidad_medida:
+          type: string
+        categoria:
+          type: string
+        estado:
+          type: string
+        image:
+          type: string
+          format: binary
+      required:
+        - codigo
+        - descripcion
+        - unidad_medida
+    ItemUpdateRequest:
+      type: object
+      properties:
+        codigo:
+          type: string
+        descripcion:
+          type: string
+        unidad_medida:
+          type: string
+        categoria:
+          type: string
+        estado:
+          type: string
+        image:
+          type: string
+          format: binary

@@ -1,0 +1,82 @@
+openapi: 3.0.3
+info:
+  title: Auth API
+  version: 1.0.0
+paths:
+  /auth/login:
+    post:
+      summary: Sign in with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Signed in
+        "401":
+          description: Invalid credentials
+  /auth/logout:
+    post:
+      summary: Sign out
+      responses:
+        "204":
+          description: Signed out
+  /auth/session:
+    get:
+      summary: Get current session
+      responses:
+        "200":
+          description: Session details
+        "401":
+          description: No active session
+  /auth/password-reset/request:
+    post:
+      summary: Request password reset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        "204":
+          description: Request accepted
+  /auth/password-reset/confirm:
+    post:
+      summary: Confirm password reset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - newPassword
+              properties:
+                token:
+                  type: string
+                newPassword:
+                  type: string
+      responses:
+        "204":
+          description: Password reset
+        "400":
+          description: Invalid or expired token
