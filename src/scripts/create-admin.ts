@@ -23,7 +23,7 @@ async function main() {
 
     // Better-Auth valida si el email ya existe, así que es seguro correrlo
     try {
-        const adminEmail = "ginoloja666@hotmail.com";
+        const adminEmail = "garyramos442@gmail.com";
 
 
 
@@ -32,8 +32,8 @@ async function main() {
         const newUser = await auth.api.createUser({
             body: {
                 email: adminEmail, // required
-                password: "supergino", // required
-                name: "Jaap-Gino", // required
+                password: "Gary25.!", // required
+                name: "Administrador", // required
                 role: "admin", // required
                 // data: { customField: "customValue" },
             },

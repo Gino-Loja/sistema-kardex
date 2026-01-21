@@ -179,12 +179,16 @@ export const assignItemsToBodega = async ({
     if (needsMovement && usuarioId) {
       movimientoId = randomUUID()
 
+      // Crear fecha con hora del mediodía para evitar problemas de zona horaria
+      const now = new Date()
+      const fechaMovimiento = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0)
+
       // Create movement in "borrador" state
       await tx.insert(movimientos).values({
         id: movimientoId,
         tipo: "entrada",
         estado: "borrador",
-        fecha: new Date(),
+        fecha: fechaMovimiento,
         bodegaDestinoId: bodegaId,
         bodegaOrigenId: null,
         terceroId: null,

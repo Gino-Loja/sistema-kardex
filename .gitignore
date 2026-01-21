@@ -45,6 +45,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-./specify
-./codex
-./specs
+/specify/
+/.codex/
+/specs/
+/.codex/
+/.claude/
+/.gemini-clipboard/
+
